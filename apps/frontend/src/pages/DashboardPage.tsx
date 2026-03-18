@@ -163,7 +163,7 @@ export default function DashboardPage() {
         <div className="surface-body">
           <div className="flex items-center justify-between gap-3">
             <h2 className="card-title text-base">Recent Bookings</h2>
-            <span className="text-xs text-base-content/50">Last 30</span>
+            <span className="text-xs text-base-content/50">Last 10</span>
           </div>
 
           {bookingsSorted.length === 0 ? (
@@ -183,7 +183,7 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {bookingsSorted.slice(0, 30).map((b) => (
+                  {bookingsSorted.slice(0, 10).map((b) => (
                     <tr key={b.id}>
                       <td className="text-sm whitespace-nowrap">
                         {new Date(b.createdAt).toLocaleString(undefined, {

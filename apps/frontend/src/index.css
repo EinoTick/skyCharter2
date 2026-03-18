@@ -28,7 +28,7 @@
 @layer components {
   /* Consistent surfaced containers for tables/lists */
   .surface {
-    @apply bg-base-100 shadow rounded-box;
+    @apply bg-base-100 shadow-sm rounded-box border border-base-300/70;
   }
 
   .surface-body {
