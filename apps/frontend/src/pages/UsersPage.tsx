@@ -1,8 +1,11 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { UserRole } from '@skycharter/shared-types'
 import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
+import { useAuth } from '../contexts/AuthContext'
+import { useState } from 'react'
+import { UserEditDialog } from '../components/UserEditDialog'
 
 interface User {
   id: string
@@ -19,6 +22,11 @@ const roleBadge: Record<string, string> = {
 }
 
 export default function UsersPage() {
+  const { user: currentUser } = useAuth()
+  const qc = useQueryClient()
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const isAdmin = currentUser?.role === UserRole.ADMIN
+
   const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: () => api.get('/users').then((r) => r.data),
@@ -74,7 +82,14 @@ export default function UsersPage() {
             </thead>
             <tbody>
               {users.map((u) => (
-                <tr key={u.id}>
+                <tr
+                  key={u.id}
+                  className={isAdmin ? 'cursor-pointer' : undefined}
+                  onClick={() => {
+                    if (!isAdmin) return
+                    setSelectedUser(u)
+                  }}
+                >
                   <td className="font-medium">{u.name}</td>
                   <td className="text-sm">{u.email}</td>
                   <td>
@@ -95,6 +110,20 @@ export default function UsersPage() {
           </table>
         </div>
       )}
+
+      <UserEditDialog
+        user={
+          selectedUser
+            ? { id: selectedUser.id, name: selectedUser.name, email: selectedUser.email, role: selectedUser.role }
+            : null
+        }
+        open={!!selectedUser}
+        onClose={() => setSelectedUser(null)}
+        onSaved={() => {
+          qc.invalidateQueries({ queryKey: ['users'] })
+          qc.invalidateQueries({ queryKey: ['bookings'] })
+        }}
+      />
     </div>
   )
 }

@@ -4,6 +4,9 @@ import { useAuth } from '../contexts/AuthContext'
 import { Check, X } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
+import { useState } from 'react'
+import { UserRole } from '@skycharter/shared-types'
+import { UserEditDialog } from '../components/UserEditDialog'
 
 interface Booking {
   id: string
@@ -29,6 +32,10 @@ const statusBadge: Record<string, string> = {
 export default function BookingsPage() {
   const { user } = useAuth()
   const qc = useQueryClient()
+  const [selectedUser, setSelectedUser] = useState<{ id: string; name: string; email: string; role: string } | null>(
+    null
+  )
+  const isAdmin = user?.role === UserRole.ADMIN
 
   const { data: bookings = [], isLoading } = useQuery<Booking[]>({
     queryKey: ['bookings'],
@@ -72,7 +79,19 @@ export default function BookingsPage() {
             </thead>
             <tbody>
               {bookings.map((b) => (
-                <tr key={b.id}>
+                <tr
+                  key={b.id}
+                  className={isAdmin ? 'cursor-pointer' : undefined}
+                  onClick={() => {
+                    if (!isAdmin) return
+                    setSelectedUser({
+                      id: b.user.id,
+                      name: b.user.name,
+                      email: b.user.email,
+                      role: UserRole.BOOKING,
+                    })
+                  }}
+                >
                   <td className="hidden sm:table-cell">
                     <div className="font-medium">{b.plane?.name}</div>
                     <div className="text-xs text-base-content/50">{b.plane?.model}</div>
@@ -114,7 +133,10 @@ export default function BookingsPage() {
                           <button
                             className="btn btn-xs btn-success"
                             title="Accept"
-                            onClick={() => updateStatus.mutate({ id: b.id, status: 'ACCEPTED' })}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              updateStatus.mutate({ id: b.id, status: 'ACCEPTED' })
+                            }}
                             disabled={updateStatus.isPending}
                           >
                             <Check size={12} />
@@ -122,7 +144,10 @@ export default function BookingsPage() {
                           <button
                             className="btn btn-xs btn-error"
                             title="Reject"
-                            onClick={() => updateStatus.mutate({ id: b.id, status: 'REJECTED' })}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              updateStatus.mutate({ id: b.id, status: 'REJECTED' })
+                            }}
                             disabled={updateStatus.isPending}
                           >
                             <X size={12} />
@@ -137,6 +162,16 @@ export default function BookingsPage() {
           </table>
         </div>
       )}
+
+      <UserEditDialog
+        user={selectedUser}
+        open={!!selectedUser}
+        onClose={() => setSelectedUser(null)}
+        onSaved={() => {
+          qc.invalidateQueries({ queryKey: ['users'] })
+          qc.invalidateQueries({ queryKey: ['bookings'] })
+        }}
+      />
     </div>
   )
 }

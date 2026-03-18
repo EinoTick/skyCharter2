@@ -70,6 +70,13 @@ export const UpdateProfileSchema = z.object({
   email: z.string().email('Invalid email address').optional(),
 })
 
+// Admin user management
+export const UpdateUserSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').optional(),
+  email: z.string().email('Invalid email address').optional(),
+  role: UserRoleSchema.optional(),
+})
+
 export const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
   newPassword: z.string().min(8, 'New password must be at least 8 characters'),
@@ -86,4 +93,5 @@ export type UpdatePlaneInput = z.infer<typeof UpdatePlaneSchema>
 export type CreateBookingInput = z.infer<typeof CreateBookingSchema>
 export type UpdateBookingStatusInput = z.infer<typeof UpdateBookingStatusSchema>
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>
+export type UpdateUserInput = z.infer<typeof UpdateUserSchema>
 export type ChangePasswordInput = z.infer<typeof ChangePasswordSchema>

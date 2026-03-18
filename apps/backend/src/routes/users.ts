@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import bcrypt from 'bcrypt'
 import { prisma } from '@skycharter/database'
-import { UpdateProfileSchema, ChangePasswordSchema } from '@skycharter/shared-types'
+import { UpdateProfileSchema, ChangePasswordSchema, UpdateUserSchema } from '@skycharter/shared-types'
 import { authenticate, AuthRequest } from '../middleware/auth'
 import { checkRole } from '../middleware/checkRole'
 
@@ -35,6 +35,19 @@ router.patch('/me', authenticate, async (req: AuthRequest, res) => {
     where: { id: req.user!.userId },
     data: parsed.data,
     select: { id: true, name: true, email: true, role: true },
+  })
+  res.json(updated)
+})
+
+// PATCH /api/users/:id — ADMIN only: update name/email/role
+router.patch('/:id', authenticate, checkRole('ADMIN'), async (req: AuthRequest, res) => {
+  const parsed = UpdateUserSchema.safeParse(req.body)
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
+
+  const updated = await prisma.user.update({
+    where: { id: req.params.id },
+    data: parsed.data,
+    select: { id: true, name: true, email: true, role: true, createdAt: true },
   })
   res.json(updated)
 })
