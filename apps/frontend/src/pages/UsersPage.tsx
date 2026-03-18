@@ -36,20 +36,20 @@ export default function UsersPage() {
       <PageHeader title="Users" subtitle="Manage access and review account roles." />
 
       {/* Summary */}
-      <div className="flex flex-wrap gap-3">
-        <div className="stat bg-base-100 shadow rounded-box py-3 px-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="stat bg-base-100 shadow rounded-box py-3 px-5 w-full">
           <div className="stat-title text-xs">Total</div>
           <div className="stat-value text-lg">{counts.total}</div>
         </div>
-        <div className="stat bg-base-100 shadow rounded-box py-3 px-5">
+        <div className="stat bg-base-100 shadow rounded-box py-3 px-5 w-full">
           <div className="stat-title text-xs">Admins</div>
           <div className="stat-value text-lg text-error">{counts[UserRole.ADMIN]}</div>
         </div>
-        <div className="stat bg-base-100 shadow rounded-box py-3 px-5">
+        <div className="stat bg-base-100 shadow rounded-box py-3 px-5 w-full">
           <div className="stat-title text-xs">Airlines</div>
           <div className="stat-value text-lg text-info">{counts[UserRole.AIRLINE]}</div>
         </div>
-        <div className="stat bg-base-100 shadow rounded-box py-3 px-5">
+        <div className="stat bg-base-100 shadow rounded-box py-3 px-5 w-full">
           <div className="stat-title text-xs">Booking Users</div>
           <div className="stat-value text-lg text-success">{counts[UserRole.BOOKING]}</div>
         </div>

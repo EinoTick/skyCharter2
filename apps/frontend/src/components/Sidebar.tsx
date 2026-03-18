@@ -35,17 +35,18 @@ const navItems = [
   },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
   const handleLogout = () => {
     logout()
     navigate('/login')
+    onNavigate?.()
   }
 
   return (
-    <aside className="w-64 bg-base-100 shadow-lg flex flex-col shrink-0">
+    <aside className="w-64 bg-base-100 shadow-lg flex flex-col shrink-0 h-full min-h-screen">
       {/* Brand */}
       <div className="p-6 border-b border-base-300">
         <div className="flex items-center gap-2">
@@ -68,6 +69,7 @@ export default function Sidebar() {
             <NavLink
               key={to}
               to={to}
+              onClick={() => onNavigate?.()}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
                   isActive
