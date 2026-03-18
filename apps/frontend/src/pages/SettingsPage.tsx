@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
+import { PageHeader } from '../components/ui/PageHeader'
 
 export default function SettingsPage() {
   const { user } = useAuth()
@@ -60,12 +61,12 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-xl">
-      <h1 className="text-2xl font-bold">Settings</h1>
+    <div className="space-y-6">
+      <PageHeader title="Settings" subtitle="Manage your profile and security preferences." />
 
       {/* Profile */}
-      <div className="card bg-base-100 shadow">
-        <div className="card-body">
+      <div className="surface max-w-xl">
+        <div className="surface-body">
           <h2 className="card-title text-base">Profile</h2>
           {profileMsg && (
             <div className={`alert ${profileMsg.type === 'success' ? 'alert-success' : 'alert-error'}`}>
@@ -119,8 +120,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Change Password */}
-      <div className="card bg-base-100 shadow">
-        <div className="card-body">
+      <div className="surface max-w-xl">
+        <div className="surface-body">
           <h2 className="card-title text-base">Change Password</h2>
           {passwordMsg && (
             <div className={`alert ${passwordMsg.type === 'success' ? 'alert-success' : 'alert-error'}`}>

@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { UserRole } from '@skycharter/shared-types'
+import { PageHeader } from '../components/ui/PageHeader'
+import { EmptyState } from '../components/ui/EmptyState'
 
 interface User {
   id: string
@@ -31,7 +33,7 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Users</h1>
+      <PageHeader title="Users" subtitle="Manage access and review account roles." />
 
       {/* Summary */}
       <div className="flex flex-wrap gap-3">
@@ -58,9 +60,9 @@ export default function UsersPage() {
           <span className="loading loading-spinner loading-lg text-primary" />
         </div>
       ) : users.length === 0 ? (
-        <div className="text-center py-16 text-base-content/50">No users found.</div>
+        <EmptyState title="No users found" description="When users register, they’ll appear here." />
       ) : (
-        <div className="overflow-x-auto">
+        <div className="surface overflow-x-auto">
           <table className="table table-zebra w-full">
             <thead>
               <tr>

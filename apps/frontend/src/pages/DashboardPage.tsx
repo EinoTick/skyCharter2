@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { BookOpen, Plane, Clock, XCircle } from 'lucide-react'
+import { PageHeader } from '../components/ui/PageHeader'
 
 interface Booking {
   id: string
@@ -52,7 +53,10 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Welcome back, {user?.name}!</h1>
+      <PageHeader
+        title={`Welcome back, ${user?.name ?? '—'}!`}
+        subtitle="Here’s a quick snapshot of recent activity."
+      />
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -64,8 +68,8 @@ export default function DashboardPage() {
 
       {/* Booking trends – Admin & Airline */}
       {(user?.role === 'ADMIN' || user?.role === 'AIRLINE') && (
-        <div className="card bg-base-100 shadow">
-          <div className="card-body">
+        <div className="surface">
+          <div className="surface-body">
             <h2 className="card-title text-base">Booking Trends</h2>
             {chartData.length === 0 ? (
               <p className="text-base-content/50 text-sm">No booking data yet.</p>
@@ -86,8 +90,8 @@ export default function DashboardPage() {
 
       {/* Upcoming trips – Booking users */}
       {user?.role === 'BOOKING' && (
-        <div className="card bg-base-100 shadow">
-          <div className="card-body">
+        <div className="surface">
+          <div className="surface-body">
             <h2 className="card-title text-base">Upcoming Trips</h2>
             {upcomingTrips.length === 0 ? (
               <p className="text-base-content/50 text-sm">

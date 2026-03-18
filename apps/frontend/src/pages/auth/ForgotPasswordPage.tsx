@@ -13,9 +13,9 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-base-200">
-      <div className="card w-full max-w-md bg-base-100 shadow-xl">
-        <div className="card-body">
+    <div className="min-h-screen flex items-center justify-center bg-base-200 px-4">
+      <div className="surface w-full max-w-md">
+        <div className="surface-body">
           <div className="flex items-center gap-2 mb-2">
             <Plane className="text-primary" size={32} />
             <h1 className="text-2xl font-bold text-primary">SkyCharter</h1>

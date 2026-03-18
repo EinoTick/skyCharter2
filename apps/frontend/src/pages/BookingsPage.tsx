@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
 import { Check, X } from 'lucide-react'
+import { PageHeader } from '../components/ui/PageHeader'
+import { EmptyState } from '../components/ui/EmptyState'
 
 interface Booking {
   id: string
@@ -41,16 +43,19 @@ export default function BookingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Bookings</h1>
+      <PageHeader
+        title="Bookings"
+        subtitle="Review bookings, statuses, and upcoming trips."
+      />
 
       {isLoading ? (
         <div className="flex justify-center py-16">
           <span className="loading loading-spinner loading-lg text-primary" />
         </div>
       ) : bookings.length === 0 ? (
-        <div className="text-center py-16 text-base-content/50">No bookings yet.</div>
+        <EmptyState title="No bookings yet" description="Once bookings are created, they’ll show up here." />
       ) : (
-        <div className="overflow-x-auto">
+        <div className="surface overflow-x-auto">
           <table className="table table-zebra w-full">
             <thead>
               <tr>

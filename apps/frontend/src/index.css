@@ -1,3 +1,53 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    @apply bg-base-200 text-base-content antialiased;
+  }
+
+  /* Improve focus visibility without fighting daisyUI */
+  :focus-visible {
+    outline: 2px solid hsl(var(--p));
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Consistent surfaced containers for tables/lists */
+  .surface {
+    @apply bg-base-100 shadow rounded-box;
+  }
+
+  .surface-body {
+    @apply p-5 sm:p-6;
+  }
+
+  .page {
+    @apply mx-auto w-full max-w-6xl;
+  }
+
+  .page-title {
+    @apply text-2xl font-bold tracking-tight;
+  }
+
+  .page-subtitle {
+    @apply text-sm text-base-content/60;
+  }
+
+  .toolbar {
+    @apply flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between;
+  }
+}

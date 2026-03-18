@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
 import { Plane, Search, Plus, X } from 'lucide-react'
+import { PageHeader } from '../components/ui/PageHeader'
+import { EmptyState } from '../components/ui/EmptyState'
 
 interface PlaneData {
   id: string
@@ -46,35 +48,45 @@ export default function PlanesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Planes</h1>
-        {(user?.role === 'AIRLINE' || user?.role === 'ADMIN') && (
-          <button
-            className="btn btn-primary btn-sm gap-2"
-            onClick={() => setShowCreateModal(true)}
-          >
-            <Plus size={16} /> Add Plane
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title="Planes"
+        subtitle="Browse available aircraft, pricing, and capacity."
+        actions={
+          (user?.role === 'AIRLINE' || user?.role === 'ADMIN') ? (
+            <button
+              className="btn btn-primary btn-sm gap-2"
+              onClick={() => setShowCreateModal(true)}
+            >
+              <Plus size={16} /> Add Plane
+            </button>
+          ) : null
+        }
+      />
 
-      <label className="input input-bordered flex items-center gap-2 max-w-sm">
-        <Search size={16} className="opacity-50" />
-        <input
-          type="text"
-          placeholder="Search by name or model…"
-          className="grow"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </label>
+      <div className="surface">
+        <div className="surface-body">
+          <label className="input input-bordered flex items-center gap-2 max-w-sm">
+            <Search size={16} className="opacity-50" />
+            <input
+              type="text"
+              placeholder="Search by name or model…"
+              className="grow"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </label>
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="flex justify-center py-16">
           <span className="loading loading-spinner loading-lg text-primary" />
         </div>
       ) : planes.length === 0 ? (
-        <div className="text-center py-16 text-base-content/50">No planes found.</div>
+        <EmptyState
+          title="No planes found"
+          description={search ? "Try a different search term." : "Once planes are added, they’ll show up here."}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {planes.map((plane) => (
@@ -184,7 +196,11 @@ function CreatePlaneModal({
           <X size={16} />
         </button>
         <h3 className="font-bold text-lg mb-4">Add New Plane</h3>
-        {error && <div className="alert alert-error mb-3"><span>{error}</span></div>}
+        {error && (
+          <div className="alert alert-error mb-3">
+            <span>{error}</span>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
             className="input input-bordered w-full"
