@@ -69,7 +69,7 @@ export default function UsersPage() {
                 <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
-                <th>Joined</th>
+                <th className="hidden sm:table-cell">Joined</th>
               </tr>
             </thead>
             <tbody>
@@ -82,7 +82,7 @@ export default function UsersPage() {
                       {u.role}
                     </span>
                   </td>
-                  <td className="text-sm text-base-content/60">
+                  <td className="hidden sm:table-cell text-sm text-base-content/60">
                     {new Date(u.createdAt).toLocaleDateString(undefined, {
                       year: 'numeric',
                       month: 'short',

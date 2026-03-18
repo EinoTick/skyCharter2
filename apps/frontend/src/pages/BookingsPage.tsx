@@ -59,19 +59,21 @@ export default function BookingsPage() {
           <table className="table table-zebra w-full">
             <thead>
               <tr>
-                <th>Plane</th>
+                <th className="hidden sm:table-cell">Plane</th>
                 {user?.role !== 'BOOKING' && <th>Booked By</th>}
                 {user?.role === 'ADMIN' && <th>Airline</th>}
-                <th>Start</th>
-                <th>End</th>
+                <th className="hidden lg:table-cell">Start</th>
+                <th className="hidden lg:table-cell">End</th>
                 <th>Status</th>
-                {(user?.role === 'AIRLINE' || user?.role === 'ADMIN') && <th>Actions</th>}
+                {(user?.role === 'AIRLINE' || user?.role === 'ADMIN') && (
+                  <th className="hidden sm:table-cell">Actions</th>
+                )}
               </tr>
             </thead>
             <tbody>
               {bookings.map((b) => (
                 <tr key={b.id}>
-                  <td>
+                  <td className="hidden sm:table-cell">
                     <div className="font-medium">{b.plane?.name}</div>
                     <div className="text-xs text-base-content/50">{b.plane?.model}</div>
                   </td>
@@ -84,7 +86,7 @@ export default function BookingsPage() {
                   {user?.role === 'ADMIN' && (
                     <td className="text-sm">{b.plane?.airline?.name}</td>
                   )}
-                  <td className="text-sm whitespace-nowrap">
+                  <td className="hidden lg:table-cell text-sm whitespace-nowrap">
                     {new Date(b.startDate).toLocaleString(undefined, {
                       month: 'short',
                       day: 'numeric',
@@ -92,7 +94,7 @@ export default function BookingsPage() {
                       minute: '2-digit',
                     })}
                   </td>
-                  <td className="text-sm whitespace-nowrap">
+                  <td className="hidden lg:table-cell text-sm whitespace-nowrap">
                     {new Date(b.endDate).toLocaleString(undefined, {
                       month: 'short',
                       day: 'numeric',
@@ -106,7 +108,7 @@ export default function BookingsPage() {
                     </span>
                   </td>
                   {(user?.role === 'AIRLINE' || user?.role === 'ADMIN') && (
-                    <td>
+                    <td className="hidden sm:table-cell">
                       {b.status === 'PENDING' && (
                         <div className="flex gap-1">
                           <button

@@ -176,16 +176,16 @@ export default function DashboardPage() {
               <table className="table table-zebra w-full">
                 <thead>
                   <tr>
-                    <th>Created</th>
+                    <th className="hidden sm:table-cell">Created</th>
                     <th>Plane</th>
                     <th>Status</th>
-                    <th>Start</th>
+                    <th className="hidden sm:table-cell">Start</th>
                   </tr>
                 </thead>
                 <tbody>
                   {bookingsSorted.slice(0, 10).map((b) => (
                     <tr key={b.id}>
-                      <td className="text-sm whitespace-nowrap">
+                      <td className="hidden sm:table-cell text-sm whitespace-nowrap">
                         {new Date(b.createdAt).toLocaleString(undefined, {
                           month: 'short',
                           day: 'numeric',
@@ -201,7 +201,7 @@ export default function DashboardPage() {
                       <td>
                         <span className="badge badge-sm badge-outline">{b.status}</span>
                       </td>
-                      <td className="text-sm whitespace-nowrap">
+                      <td className="hidden sm:table-cell text-sm whitespace-nowrap">
                         {new Date(b.startDate).toLocaleString(undefined, {
                           month: 'short',
                           day: 'numeric',
