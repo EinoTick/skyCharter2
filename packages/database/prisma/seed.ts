@@ -17,6 +17,10 @@ function addHours(d: Date, h: number): Date {
   return new Date(d.getTime() + h * 60 * 60 * 1000)
 }
 
+function subDays(d: Date, days: number): Date {
+  return new Date(d.getTime() - days * 24 * 60 * 60 * 1000)
+}
+
 function pad(n: number, width = 3) {
   return String(n).padStart(width, '0')
 }
@@ -266,6 +270,9 @@ async function main() {
     const startDate = randDate(YEAR_START, YEAR_END)
     const durationHours = pick([2, 3, 4, 5, 6, 8, 10, 12])
     const note = pick(BOOKING_NOTES)
+    // createdAt = 1–30 days before startDate so the dashboard chart
+    // groups by a realistic booking-creation date, not the seed run date
+    const createdAt = subDays(startDate, Math.ceil(Math.random() * 30))
     return {
       id: `booking-seed-${pad(i + 1, 4)}`,
       userId: pick(bookerRecords).id,
@@ -273,6 +280,7 @@ async function main() {
       status: pick(STATUS_WEIGHTS),
       startDate,
       endDate: addHours(startDate, durationHours),
+      createdAt,
       notes: note ?? undefined,
     }
   })
