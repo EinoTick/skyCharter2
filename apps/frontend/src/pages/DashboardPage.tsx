@@ -25,10 +25,20 @@ interface Booking {
 export default function DashboardPage() {
   const { user } = useAuth()
 
-  const { data: bookings = [] } = useQuery<Booking[]>({
-    queryKey: ['bookings'],
-    queryFn: () => api.get('/bookings').then((r) => r.data),
+  const { data: bookingsResponse } = useQuery<{ items: Booking[] }>({
+    queryKey: ['bookings', 'dashboard'],
+    queryFn: () =>
+      api
+        .get('/bookings', {
+          params: {
+            page: 1,
+            size: 5000,
+            from: new Date(new Date().setMonth(new Date().getMonth() - 12)).toISOString(),
+          },
+        })
+        .then((r) => r.data),
   })
+  const bookings = bookingsResponse?.items ?? []
 
   const bookingsSorted = [...bookings].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()

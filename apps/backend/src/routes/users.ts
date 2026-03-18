@@ -8,12 +8,29 @@ import { checkRole } from '../middleware/checkRole'
 const router = Router()
 
 // GET /api/users  — ADMIN only: list all users
-router.get('/', authenticate, checkRole('ADMIN'), async (_req, res) => {
-  const users = await prisma.user.findMany({
-    select: { id: true, name: true, email: true, role: true, createdAt: true },
-    orderBy: { createdAt: 'desc' },
-  })
-  res.json(users)
+router.get('/', authenticate, checkRole('ADMIN'), async (req, res) => {
+  const page = Math.max(1, Number(req.query.page ?? 1) || 1)
+  const sizeRaw = Number(req.query.size ?? 50) || 50
+  const size = Math.min(200, Math.max(1, sizeRaw))
+  const skip = (page - 1) * size
+
+  const [total, roleGroups, items] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.groupBy({ by: ['role'], _count: { _all: true } }),
+    prisma.user.findMany({
+      select: { id: true, name: true, email: true, role: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: size,
+    }),
+  ])
+
+  const countsByRole = roleGroups.reduce<Record<string, number>>((acc, g) => {
+    acc[g.role] = g._count._all
+    return acc
+  }, {})
+
+  res.json({ items, total, page, size, countsByRole })
 })
 
 // GET /api/users/me  — current user's profile

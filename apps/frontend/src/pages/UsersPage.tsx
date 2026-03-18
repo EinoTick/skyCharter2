@@ -15,6 +15,14 @@ interface User {
   createdAt: string
 }
 
+type PaginatedUsers = {
+  items: User[]
+  total: number
+  page: number
+  size: number
+  countsByRole: Record<string, number>
+}
+
 const roleBadge: Record<string, string> = {
   ADMIN: 'badge-error',
   AIRLINE: 'badge-info',
@@ -26,17 +34,24 @@ export default function UsersPage() {
   const qc = useQueryClient()
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const isAdmin = currentUser?.role === UserRole.ADMIN
+  const [page, setPage] = useState(1)
+  const size = 50
 
-  const { data: users = [], isLoading } = useQuery<User[]>({
-    queryKey: ['users'],
-    queryFn: () => api.get('/users').then((r) => r.data),
+  const { data, isLoading } = useQuery<PaginatedUsers>({
+    queryKey: ['users', page, size],
+    queryFn: () => api.get('/users', { params: { page, size } }).then((r) => r.data),
   })
 
+  const users = data?.items ?? []
+  const total = data?.total ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / size))
+  const countsByRole = data?.countsByRole ?? {}
+
   const counts = {
-    total: users.length,
-    [UserRole.ADMIN]: users.filter((u) => u.role === UserRole.ADMIN).length,
-    [UserRole.AIRLINE]: users.filter((u) => u.role === UserRole.AIRLINE).length,
-    [UserRole.BOOKING]: users.filter((u) => u.role === UserRole.BOOKING).length,
+    total,
+    [UserRole.ADMIN]: countsByRole[UserRole.ADMIN] ?? 0,
+    [UserRole.AIRLINE]: countsByRole[UserRole.AIRLINE] ?? 0,
+    [UserRole.BOOKING]: countsByRole[UserRole.BOOKING] ?? 0,
   }
 
   return (
@@ -67,47 +82,73 @@ export default function UsersPage() {
         <div className="flex justify-center py-16">
           <span className="loading loading-spinner loading-lg text-primary" />
         </div>
-      ) : users.length === 0 ? (
+      ) : total === 0 ? (
         <EmptyState title="No users found" description="When users register, they’ll appear here." />
       ) : (
-        <div className="surface overflow-x-auto">
-          <table className="table table-zebra w-full">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th className="hidden sm:table-cell">Joined</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr
-                  key={u.id}
-                  className={isAdmin ? 'cursor-pointer' : undefined}
-                  onClick={() => {
-                    if (!isAdmin) return
-                    setSelectedUser(u)
-                  }}
-                >
-                  <td className="font-medium">{u.name}</td>
-                  <td className="text-sm">{u.email}</td>
-                  <td>
-                    <span className={`badge badge-sm ${roleBadge[u.role] ?? 'badge-neutral'}`}>
-                      {u.role}
-                    </span>
-                  </td>
-                  <td className="hidden sm:table-cell text-sm text-base-content/60">
-                    {new Date(u.createdAt).toLocaleDateString(undefined, {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </td>
+        <div className="space-y-3">
+          <div className="surface overflow-x-auto">
+            <table className="table table-zebra w-full">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th className="hidden sm:table-cell">Joined</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr
+                    key={u.id}
+                    className={isAdmin ? 'cursor-pointer' : undefined}
+                    onClick={() => {
+                      if (!isAdmin) return
+                      setSelectedUser(u)
+                    }}
+                  >
+                    <td className="font-medium">{u.name}</td>
+                    <td className="text-sm">{u.email}</td>
+                    <td>
+                      <span className={`badge badge-sm ${roleBadge[u.role] ?? 'badge-neutral'}`}>
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="hidden sm:table-cell text-sm text-base-content/60">
+                      {new Date(u.createdAt).toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-base-content/60">
+              Page <span className="font-medium text-base-content">{page}</span> of{' '}
+              <span className="font-medium text-base-content">{totalPages}</span> ·{' '}
+              <span className="font-medium text-base-content">{total}</span> total
+            </div>
+            <div className="join">
+              <button
+                className="btn btn-sm join-item"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+              >
+                Prev
+              </button>
+              <button
+                className="btn btn-sm join-item"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
