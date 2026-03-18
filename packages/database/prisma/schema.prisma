@@ -1,0 +1,74 @@
+// SkyCharter – Prisma Schema
+// Provider: sqlite (MVP). To migrate to PostgreSQL, change provider to "postgresql"
+// and update DATABASE_URL. Optionally convert String role/status fields to native
+// PostgreSQL enums at that time.
+//
+// SQLITE CONSTRAINT: Prisma `enum` and JSON array types are NOT used here.
+// Role and status values are enforced at the application layer via Zod
+// (see packages/shared-types/src/index.ts).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// User
+// role: "ADMIN" | "AIRLINE" | "BOOKING"  (String – Zod-validated in app layer)
+// ---------------------------------------------------------------------------
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("BOOKING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Planes this user owns (only relevant when role = AIRLINE)
+  planes   Plane[]   @relation("AirlinePlanes")
+  /// Bookings made by this user (only relevant when role = BOOKING)
+  bookings Booking[]
+}
+
+// ---------------------------------------------------------------------------
+// Plane
+// Owned by an AIRLINE user. Bookable by BOOKING users.
+// ---------------------------------------------------------------------------
+model Plane {
+  id           String   @id @default(cuid())
+  name         String
+  model        String
+  capacity     Int
+  pricePerHour Float
+  description  String?
+  isAvailable  Boolean  @default(true)
+  airlineId    String
+  airline      User     @relation("AirlinePlanes", fields: [airlineId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  bookings Booking[]
+}
+
+// ---------------------------------------------------------------------------
+// Booking
+// status: "PENDING" | "ACCEPTED" | "REJECTED"  (String – Zod-validated)
+// ---------------------------------------------------------------------------
+model Booking {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planeId   String
+  plane     Plane    @relation(fields: [planeId], references: [id], onDelete: Cascade)
+  status    String   @default("PENDING")
+  startDate DateTime
+  endDate   DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
