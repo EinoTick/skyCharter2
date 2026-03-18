@@ -134,14 +134,14 @@ export default function UsersPage() {
             </div>
             <div className="join">
               <button
-                className="btn btn-sm join-item"
+                className="btn btn-sm btn-outline btn-primary join-item"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
               >
                 Prev
               </button>
               <button
-                className="btn btn-sm join-item"
+                className="btn btn-sm btn-outline btn-primary join-item"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
               >
