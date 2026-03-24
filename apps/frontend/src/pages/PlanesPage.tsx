@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext'
 import { Plane, Search, Plus, X } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
+import { UserRole } from '@skycharter/shared-types'
+import { PlaneEditDialog } from '../components/PlaneEditDialog'
 
 interface PlaneData {
   id: string
@@ -23,6 +25,7 @@ export default function PlanesPage() {
   const [search, setSearch] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [bookingPlaneId, setBookingPlaneId] = useState<string | null>(null)
+  const [editPlane, setEditPlane] = useState<PlaneData | null>(null)
 
   const { data: planes = [], isLoading } = useQuery<PlaneData[]>({
     queryKey: ['planes', search],
@@ -90,9 +93,22 @@ export default function PlanesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {planes.map((plane) => (
+            (() => {
+              const canEdit =
+                user?.role === UserRole.ADMIN ||
+                (user?.role === UserRole.AIRLINE && plane.airline?.id === user.id)
+
+              return (
             <div
               key={plane.id}
-              className="card bg-base-100 shadow hover:shadow-md transition-shadow"
+              className={[
+                'card bg-base-100 shadow hover:shadow-md transition-shadow',
+                canEdit ? 'cursor-pointer' : '',
+              ].join(' ')}
+              onClick={() => {
+                if (!canEdit) return
+                setEditPlane(plane)
+              }}
             >
               <div className="card-body">
                 <div className="flex items-start justify-between">
@@ -121,7 +137,10 @@ export default function PlanesPage() {
                   <div className="card-actions justify-end mt-2">
                     <button
                       className="btn btn-primary btn-sm"
-                      onClick={() => setBookingPlaneId(plane.id)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setBookingPlaneId(plane.id)
+                      }}
                     >
                       Book Now
                     </button>
@@ -129,6 +148,8 @@ export default function PlanesPage() {
                 )}
               </div>
             </div>
+              )
+            })()
           ))}
         </div>
       )}
@@ -153,6 +174,27 @@ export default function PlanesPage() {
           loading={bookMutation.isPending}
         />
       )}
+
+      <PlaneEditDialog
+        plane={
+          editPlane
+            ? {
+                id: editPlane.id,
+                name: editPlane.name,
+                model: editPlane.model,
+                capacity: editPlane.capacity,
+                pricePerHour: editPlane.pricePerHour,
+                description: editPlane.description,
+                isAvailable: editPlane.isAvailable,
+              }
+            : null
+        }
+        open={!!editPlane}
+        onClose={() => setEditPlane(null)}
+        onSaved={() => {
+          qc.invalidateQueries({ queryKey: ['planes'] })
+        }}
+      />
     </div>
   )
 }
