@@ -9,15 +9,19 @@ const router = Router()
 // GET /api/planes  — all authenticated users
 router.get('/', authenticate, async (req: AuthRequest, res) => {
   const { search } = req.query
+  const { role, userId } = req.user!
   const planes = await prisma.plane.findMany({
-    where: search
-      ? {
-          OR: [
-            { name: { contains: String(search) } },
-            { model: { contains: String(search) } },
-          ],
-        }
-      : undefined,
+    where: {
+      ...(role === 'AIRLINE' ? { airlineId: userId } : {}),
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: String(search) } },
+              { model: { contains: String(search) } },
+            ],
+          }
+        : {}),
+    },
     include: { airline: { select: { id: true, name: true, email: true } } },
     orderBy: { createdAt: 'desc' },
   })
@@ -39,9 +43,19 @@ router.post('/', authenticate, checkRole('AIRLINE', 'ADMIN'), async (req: AuthRe
   const parsed = CreatePlaneSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
 
-  // ADMIN can supply an explicit airlineId; AIRLINE defaults to themselves
-  const airlineId =
-    req.user!.role === 'ADMIN' && req.body.airlineId ? req.body.airlineId : req.user!.userId
+  let airlineId: string
+  if (req.user!.role === 'ADMIN') {
+    if (!req.body.airlineId || typeof req.body.airlineId !== 'string') {
+      return res.status(400).json({ error: 'airlineId is required for admin-created planes' })
+    }
+    const airline = await prisma.user.findUnique({ where: { id: req.body.airlineId } })
+    if (!airline || airline.role !== 'AIRLINE') {
+      return res.status(400).json({ error: 'Selected airline is invalid' })
+    }
+    airlineId = airline.id
+  } else {
+    airlineId = req.user!.userId
+  }
 
   const plane = await prisma.plane.create({
     data: { ...parsed.data, airlineId },

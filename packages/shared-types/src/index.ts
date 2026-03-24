@@ -84,6 +84,10 @@ export const UpdateUserSchema = z.object({
   role: UserRoleSchema.optional(),
 })
 
+export const UpdateAirlineNameSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+})
+
 export const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
   newPassword: z.string().min(8, 'New password must be at least 8 characters'),
@@ -102,4 +106,5 @@ export type UpdateBookingStatusInput = z.infer<typeof UpdateBookingStatusSchema>
 export type UpdateBookingInput = z.infer<typeof UpdateBookingSchema>
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>
 export type UpdateUserInput = z.infer<typeof UpdateUserSchema>
+export type UpdateAirlineNameInput = z.infer<typeof UpdateAirlineNameSchema>
 export type ChangePasswordInput = z.infer<typeof ChangePasswordSchema>

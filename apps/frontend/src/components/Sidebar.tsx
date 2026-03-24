@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Plane, BookOpen, LayoutDashboard, Settings, LogOut, Users, KeyRound } from 'lucide-react'
+import { Plane, BookOpen, LayoutDashboard, Settings, LogOut, Users, KeyRound, Building2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 const navItems = [
@@ -26,6 +26,12 @@ const navItems = [
     label: 'Users',
     icon: Users,
     roles: ['ADMIN'],
+  },
+  {
+    to: '/airlines',
+    label: 'Airlines',
+    icon: Building2,
+    roles: ['ADMIN', 'AIRLINE'],
   },
   {
     to: '/settings',

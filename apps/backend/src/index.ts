@@ -6,6 +6,7 @@ import authRoutes from './routes/auth'
 import planeRoutes from './routes/planes'
 import bookingRoutes from './routes/bookings'
 import userRoutes from './routes/users'
+import airlineRoutes from './routes/airlines'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/planes', planeRoutes)
 app.use('/api/bookings', bookingRoutes)
 app.use('/api/users', userRoutes)
+app.use('/api/airlines', airlineRoutes)
 
 // Global error handler
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

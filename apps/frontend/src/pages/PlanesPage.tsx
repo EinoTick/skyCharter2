@@ -19,6 +19,12 @@ interface PlaneData {
   airline: { id: string; name: string; email: string }
 }
 
+interface AirlineOption {
+  id: string
+  name: string
+  email: string
+}
+
 export default function PlanesPage() {
   const { user } = useAuth()
   const qc = useQueryClient()
@@ -31,6 +37,12 @@ export default function PlanesPage() {
     queryKey: ['planes', search],
     queryFn: () =>
       api.get('/planes', { params: search ? { search } : {} }).then((r) => r.data),
+  })
+
+  const { data: airlines = [] } = useQuery<AirlineOption[]>({
+    queryKey: ['airlines', 'for-plane-create'],
+    queryFn: () => api.get('/airlines').then((r) => r.data),
+    enabled: user?.role === UserRole.ADMIN,
   })
 
   const createPlaneMutation = useMutation({
@@ -156,6 +168,8 @@ export default function PlanesPage() {
 
       {showCreateModal && (
         <CreatePlaneModal
+          isAdmin={user?.role === UserRole.ADMIN}
+          airlines={airlines}
           onClose={() => setShowCreateModal(false)}
           onSubmit={createPlaneMutation.mutate}
           loading={createPlaneMutation.isPending}
@@ -201,11 +215,15 @@ export default function PlanesPage() {
 
 // ---- Create Plane Modal ----
 function CreatePlaneModal({
+  isAdmin,
+  airlines,
   onClose,
   onSubmit,
   loading,
   error,
 }: {
+  isAdmin: boolean
+  airlines: AirlineOption[]
   onClose: () => void
   onSubmit: (d: unknown) => void
   loading: boolean
@@ -217,14 +235,17 @@ function CreatePlaneModal({
     capacity: '',
     pricePerHour: '',
     description: '',
+    airlineId: '',
   })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (isAdmin && !form.airlineId) return
     onSubmit({
       ...form,
       capacity: Number(form.capacity),
       pricePerHour: Number(form.pricePerHour),
+      ...(isAdmin ? { airlineId: form.airlineId } : {}),
     })
   }
 
@@ -244,6 +265,28 @@ function CreatePlaneModal({
           </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-3">
+          {isAdmin && (
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Airline</span>
+              </label>
+              <select
+                className="select select-bordered w-full"
+                value={form.airlineId}
+                onChange={(e) => setForm({ ...form, airlineId: e.target.value })}
+                required
+              >
+                <option value="" disabled>
+                  Select airline
+                </option>
+                {airlines.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} ({a.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <input
             className="input input-bordered w-full"
             placeholder="Plane Name"

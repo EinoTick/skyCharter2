@@ -10,6 +10,8 @@ import BookingsPage from './pages/BookingsPage'
 import SettingsPage from './pages/SettingsPage'
 import ChangePasswordPage from './pages/ChangePasswordPage'
 import UsersPage from './pages/UsersPage'
+import AirlinesPage from './pages/AirlinesPage'
+import { UserRole } from '@skycharter/shared-types'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
@@ -21,6 +23,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     )
   }
   if (!user) return <Navigate to="/login" replace />
+  return <>{children}</>
+}
+
+function RoleRoute({ allowed, children }: { allowed: string[]; children: React.ReactNode }) {
+  const { user } = useAuth()
+  if (!user) return <Navigate to="/login" replace />
+  if (!allowed.includes(user.role)) return <Navigate to="/dashboard" replace />
   return <>{children}</>
 }
 
@@ -44,6 +53,14 @@ export default function App() {
         <Route path="planes" element={<PlanesPage />} />
         <Route path="bookings" element={<BookingsPage />} />
         <Route path="users" element={<UsersPage />} />
+        <Route
+          path="airlines"
+          element={
+            <RoleRoute allowed={[UserRole.ADMIN, UserRole.AIRLINE]}>
+              <AirlinesPage />
+            </RoleRoute>
+          }
+        />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="settings/password" element={<ChangePasswordPage />} />
       </Route>
