@@ -33,7 +33,6 @@ export default function DashboardPage() {
           params: {
             page: 1,
             size: 5000,
-            from: new Date(new Date().setMonth(new Date().getMonth() - 12)).toISOString(),
           },
         })
         .then((r) => r.data),
@@ -51,15 +50,8 @@ export default function DashboardPage() {
     rejected: bookings.filter((b) => b.status === 'REJECTED').length,
   }
 
-  // 12-month trend — range derived from the actual data so it works regardless
-  // of whether bookings are historic seed data or recent live data
-  const monthBuckets = getMonthRangeFromData(bookings)
-  const monthCounts: Record<string, number> = Object.fromEntries(monthBuckets.map((m) => [m.key, 0]))
-  for (const b of bookings) {
-    const k = monthKey(new Date(b.createdAt))
-    if (k in monthCounts) monthCounts[k] += 1
-  }
-  const chartData12m = monthBuckets.map((m) => ({ month: m.label, count: monthCounts[m.key] ?? 0 }))
+  // Top 5 busiest months in the last 12-month window (always exactly 5 rows)
+  const chartDataTopMonths = getTop5BusiestMonths(bookings)
 
   // Last 30 days trend — anchored to the latest booking date in the data
   const dayBuckets = getLast30DaysFromData(bookings)
@@ -94,20 +86,16 @@ export default function DashboardPage() {
         <>
           <div className="surface">
             <div className="surface-body">
-              <h2 className="card-title text-base">Booking Trends (Last 12 Months)</h2>
-              {bookings.length === 0 ? (
-                <p className="text-base-content/50 text-sm">No booking data yet.</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={chartData12m} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-                    <Tooltip />
-                    <Bar dataKey="count" name="Bookings" fill="hsl(var(--p))" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
+              <h2 className="card-title text-base">Top 5 Busiest Months</h2>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={chartDataTopMonths} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Bar dataKey="count" name="Bookings" fill="hsl(var(--p))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
@@ -267,33 +255,33 @@ function dayKey(d: Date) {
   )}`
 }
 
-/** Build monthly buckets spanning the actual data range (up to 24 months). */
-function getMonthRangeFromData(bookings: { createdAt: string }[]) {
-  if (bookings.length === 0) {
-    // Fall back to last 12 months from today when there is no data
-    const now = new Date()
-    return Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1)
-      return { key: monthKey(d), label: d.toLocaleString(undefined, { month: 'short', year: '2-digit' }) }
-    })
+/** Top 5 months by booking count from the latest 12-month window; always returns 5 rows. */
+function getTop5BusiestMonths(bookings: { createdAt: string }[]) {
+  const anchor = bookings.length
+    ? new Date(Math.max(...bookings.map((b) => new Date(b.createdAt).getTime())))
+    : new Date()
+
+  const monthBuckets = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(anchor.getFullYear(), anchor.getMonth() - (11 - i), 1)
+    return {
+      key: monthKey(d),
+      label: d.toLocaleString(undefined, { month: 'short', year: '2-digit' }),
+      ts: d.getTime(),
+      count: 0,
+    }
+  })
+
+  const counts: Record<string, number> = Object.fromEntries(monthBuckets.map((m) => [m.key, 0]))
+  for (const b of bookings) {
+    const k = monthKey(new Date(b.createdAt))
+    if (k in counts) counts[k] += 1
   }
 
-  const timestamps = bookings.map((b) => new Date(b.createdAt).getTime())
-  const minDate = new Date(Math.min(...timestamps))
-  const maxDate = new Date(Math.max(...timestamps))
-
-  const res: { key: string; label: string }[] = []
-  const cursor = new Date(minDate.getFullYear(), minDate.getMonth(), 1)
-  const end    = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1)
-
-  while (cursor <= end && res.length <= 24) {
-    res.push({
-      key: monthKey(new Date(cursor)),
-      label: cursor.toLocaleString(undefined, { month: 'short', year: '2-digit' }),
-    })
-    cursor.setMonth(cursor.getMonth() + 1)
-  }
-  return res
+  return monthBuckets
+    .map((m) => ({ ...m, count: counts[m.key] ?? 0 }))
+    .sort((a, b) => b.count - a.count || b.ts - a.ts)
+    .slice(0, 5)
+    .map((m) => ({ month: m.label, count: m.count }))
 }
 
 /** 30-day window ending at the latest createdAt in the data (falls back to today). */
