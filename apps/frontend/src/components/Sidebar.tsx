@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Plane, BookOpen, LayoutDashboard, Settings, LogOut, Users } from 'lucide-react'
+import { Plane, BookOpen, LayoutDashboard, Settings, LogOut, Users, KeyRound } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 const navItems = [
@@ -31,6 +31,12 @@ const navItems = [
     to: '/settings',
     label: 'Settings',
     icon: Settings,
+    roles: ['ADMIN', 'AIRLINE', 'BOOKING'],
+  },
+  {
+    to: '/settings/password',
+    label: 'Password',
+    icon: KeyRound,
     roles: ['ADMIN', 'AIRLINE', 'BOOKING'],
   },
 ]
@@ -69,6 +75,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             <NavLink
               key={to}
               to={to}
+              end={to === '/settings'}
               onClick={() => onNavigate?.()}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${

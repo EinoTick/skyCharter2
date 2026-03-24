@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import bcrypt from 'bcrypt'
 import { prisma } from '@skycharter/database'
-import { UpdateProfileSchema, ChangePasswordSchema, UpdateUserSchema } from '@skycharter/shared-types'
+import { UpdateProfileSchema, ChangePasswordSchema, UpdateUserSchema, RegisterSchema } from '@skycharter/shared-types'
 import { authenticate, AuthRequest } from '../middleware/auth'
 import { checkRole } from '../middleware/checkRole'
 
@@ -41,6 +41,23 @@ router.get('/me', authenticate, async (req: AuthRequest, res) => {
   })
   if (!user) return res.status(404).json({ error: 'User not found' })
   res.json(user)
+})
+
+// POST /api/users — ADMIN only: create user
+router.post('/', authenticate, checkRole('ADMIN'), async (req: AuthRequest, res) => {
+  const parsed = RegisterSchema.safeParse(req.body)
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
+
+  const { name, email, password, role } = parsed.data
+  const existing = await prisma.user.findUnique({ where: { email } })
+  if (existing) return res.status(409).json({ error: 'Email already in use' })
+
+  const hashed = await bcrypt.hash(password, 10)
+  const created = await prisma.user.create({
+    data: { name, email, password: hashed, role },
+    select: { id: true, name: true, email: true, role: true, createdAt: true },
+  })
+  res.status(201).json(created)
 })
 
 // PATCH /api/users/me  — update name / email

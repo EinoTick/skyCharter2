@@ -64,6 +64,13 @@ export const UpdateBookingStatusSchema = z.object({
   status: BookingStatusSchema,
 })
 
+export const UpdateBookingSchema = z.object({
+  startDate: z.string().datetime('Invalid start date').optional(),
+  endDate: z.string().datetime('Invalid end date').optional(),
+  notes: z.string().optional(),
+  status: BookingStatusSchema.optional(),
+})
+
 // Profile
 export const UpdateProfileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').optional(),
@@ -92,6 +99,7 @@ export type CreatePlaneInput = z.infer<typeof CreatePlaneSchema>
 export type UpdatePlaneInput = z.infer<typeof UpdatePlaneSchema>
 export type CreateBookingInput = z.infer<typeof CreateBookingSchema>
 export type UpdateBookingStatusInput = z.infer<typeof UpdateBookingStatusSchema>
+export type UpdateBookingInput = z.infer<typeof UpdateBookingSchema>
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>
 export type UpdateUserInput = z.infer<typeof UpdateUserSchema>
 export type ChangePasswordInput = z.infer<typeof ChangePasswordSchema>

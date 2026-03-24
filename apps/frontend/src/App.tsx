@@ -8,6 +8,7 @@ import DashboardPage from './pages/DashboardPage'
 import PlanesPage from './pages/PlanesPage'
 import BookingsPage from './pages/BookingsPage'
 import SettingsPage from './pages/SettingsPage'
+import ChangePasswordPage from './pages/ChangePasswordPage'
 import UsersPage from './pages/UsersPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="bookings" element={<BookingsPage />} />
         <Route path="users" element={<UsersPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="settings/password" element={<ChangePasswordPage />} />
       </Route>
     </Routes>
   )

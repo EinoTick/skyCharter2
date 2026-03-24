@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { UserRole } from '@skycharter/shared-types'
 import { PageHeader } from '../components/ui/PageHeader'
@@ -6,6 +6,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { useAuth } from '../contexts/AuthContext'
 import { useState } from 'react'
 import { UserEditDialog } from '../components/UserEditDialog'
+import { Plus, X } from 'lucide-react'
 
 interface User {
   id: string
@@ -33,6 +34,7 @@ export default function UsersPage() {
   const { user: currentUser } = useAuth()
   const qc = useQueryClient()
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [showCreateUser, setShowCreateUser] = useState(false)
   const isAdmin = currentUser?.role === UserRole.ADMIN
   const [page, setPage] = useState(1)
   const size = 50
@@ -54,9 +56,28 @@ export default function UsersPage() {
     [UserRole.BOOKING]: countsByRole[UserRole.BOOKING] ?? 0,
   }
 
+  const createUserMutation = useMutation({
+    mutationFn: (payload: { name: string; email: string; password: string; role: string }) =>
+      api.post('/users', payload),
+    onSuccess: () => {
+      setShowCreateUser(false)
+      qc.invalidateQueries({ queryKey: ['users'] })
+    },
+  })
+
   return (
     <div className="space-y-6">
-      <PageHeader title="Users" subtitle="Manage access and review account roles." />
+      <PageHeader
+        title="Users"
+        subtitle="Manage access and review account roles."
+        actions={
+          isAdmin ? (
+            <button className="btn btn-primary btn-sm gap-2" onClick={() => setShowCreateUser(true)}>
+              <Plus size={16} /> Create User
+            </button>
+          ) : null
+        }
+      />
 
       {/* Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -165,6 +186,105 @@ export default function UsersPage() {
           qc.invalidateQueries({ queryKey: ['bookings'] })
         }}
       />
+
+      {showCreateUser && (
+        <CreateUserDialog
+          onClose={() => setShowCreateUser(false)}
+          onSubmit={createUserMutation.mutate}
+          loading={createUserMutation.isPending}
+          error={
+            createUserMutation.error instanceof Error
+              ? createUserMutation.error.message
+              : undefined
+          }
+        />
+      )}
     </div>
+  )
+}
+
+function CreateUserDialog({
+  onClose,
+  onSubmit,
+  loading,
+  error,
+}: {
+  onClose: () => void
+  onSubmit: (d: { name: string; email: string; password: string; role: string }) => void
+  loading: boolean
+  error?: string
+}) {
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: UserRole.BOOKING as string,
+  })
+
+  return (
+    <dialog className="modal modal-open">
+      <div className="modal-box">
+        <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose}>
+          <X size={16} />
+        </button>
+        <h3 className="font-bold text-lg">Create User</h3>
+        {error ? (
+          <div className="alert alert-error mt-3">
+            <span>{error}</span>
+          </div>
+        ) : null}
+        <form
+          className="space-y-3 mt-4"
+          onSubmit={(e) => {
+            e.preventDefault()
+            onSubmit(form)
+          }}
+        >
+          <input
+            className="input input-bordered w-full"
+            placeholder="Full name"
+            value={form.name}
+            onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
+            required
+            minLength={2}
+          />
+          <input
+            type="email"
+            className="input input-bordered w-full"
+            placeholder="Email"
+            value={form.email}
+            onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))}
+            required
+          />
+          <input
+            type="password"
+            className="input input-bordered w-full"
+            placeholder="Password"
+            value={form.password}
+            onChange={(e) => setForm((s) => ({ ...s, password: e.target.value }))}
+            required
+            minLength={8}
+          />
+          <select
+            className="select select-bordered w-full"
+            value={form.role}
+            onChange={(e) => setForm((s) => ({ ...s, role: e.target.value }))}
+          >
+            <option value={UserRole.BOOKING}>BOOKING</option>
+            <option value={UserRole.AIRLINE}>AIRLINE</option>
+            <option value={UserRole.ADMIN}>ADMIN</option>
+          </select>
+          <div className="modal-action">
+            <button type="button" className="btn btn-ghost" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? <span className="loading loading-spinner" /> : 'Create User'}
+            </button>
+          </div>
+        </form>
+      </div>
+      <div className="modal-backdrop" onClick={onClose} />
+    </dialog>
   )
 }

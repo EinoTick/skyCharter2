@@ -4,9 +4,8 @@ import { useAuth } from '../contexts/AuthContext'
 import { Check, X } from 'lucide-react'
 import { PageHeader } from '../components/ui/PageHeader'
 import { EmptyState } from '../components/ui/EmptyState'
-import { useState } from 'react'
-import { UserRole } from '@skycharter/shared-types'
-import { UserEditDialog } from '../components/UserEditDialog'
+import { useEffect, useState } from 'react'
+import { BookingStatus, UserRole } from '@skycharter/shared-types'
 
 interface Booking {
   id: string
@@ -40,9 +39,7 @@ const statusBadge: Record<string, string> = {
 export default function BookingsPage() {
   const { user } = useAuth()
   const qc = useQueryClient()
-  const [selectedUser, setSelectedUser] = useState<{ id: string; name: string; email: string; role: string } | null>(
-    null
-  )
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const isAdmin = user?.role === UserRole.ADMIN
   const [page, setPage] = useState(1)
   const size = 50
@@ -95,15 +92,9 @@ export default function BookingsPage() {
                 {bookings.map((b) => (
                   <tr
                     key={b.id}
-                    className={isAdmin ? 'cursor-pointer' : undefined}
+                    className="cursor-pointer"
                     onClick={() => {
-                      if (!isAdmin) return
-                      setSelectedUser({
-                        id: b.user.id,
-                        name: b.user.name,
-                        email: b.user.email,
-                        role: b.user.role ?? UserRole.BOOKING,
-                      })
+                      setSelectedBooking(b)
                     }}
                   >
                     <td className="hidden sm:table-cell">
@@ -202,15 +193,145 @@ export default function BookingsPage() {
         </div>
       )}
 
-      <UserEditDialog
-        user={selectedUser}
-        open={!!selectedUser}
-        onClose={() => setSelectedUser(null)}
+      <BookingEditDialog
+        booking={selectedBooking}
+        open={!!selectedBooking}
+        canEditStatus={user?.role === UserRole.ADMIN || user?.role === UserRole.AIRLINE}
+        onClose={() => setSelectedBooking(null)}
         onSaved={() => {
-          qc.invalidateQueries({ queryKey: ['users'] })
           qc.invalidateQueries({ queryKey: ['bookings'] })
         }}
       />
     </div>
   )
+}
+
+function BookingEditDialog({
+  booking,
+  open,
+  canEditStatus,
+  onClose,
+  onSaved,
+}: {
+  booking: Booking | null
+  open: boolean
+  canEditStatus: boolean
+  onClose: () => void
+  onSaved: () => void
+}) {
+  type BookingStatusValue = (typeof BookingStatus)[keyof typeof BookingStatus]
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [notes, setNotes] = useState('')
+  const [status, setStatus] = useState<BookingStatusValue>(BookingStatus.PENDING)
+
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      if (!booking) return
+      await api.patch(`/bookings/${booking.id}`, {
+        startDate: new Date(startDate).toISOString(),
+        endDate: new Date(endDate).toISOString(),
+        notes: notes || undefined,
+        ...(canEditStatus ? { status } : {}),
+      })
+    },
+    onSuccess: () => {
+      onSaved()
+      onClose()
+    },
+  })
+
+  // sync form when a different booking is opened
+  useEffect(() => {
+    if (!booking || !open) return
+    setStartDate(toDateTimeLocal(booking.startDate))
+    setEndDate(toDateTimeLocal(booking.endDate))
+    setNotes(booking.notes ?? '')
+    setStatus((booking.status as BookingStatusValue) ?? BookingStatus.PENDING)
+  }, [booking, open])
+
+  if (!open || !booking) return null
+
+  const error =
+    updateMutation.error instanceof Error ? updateMutation.error.message : undefined
+
+  return (
+    <dialog className="modal modal-open">
+      <div className="modal-box">
+        <h3 className="font-bold text-lg">Edit Booking</h3>
+        <p className="text-sm text-base-content/60 mt-1">
+          {booking.plane?.name} · {booking.user?.name}
+        </p>
+
+        {error ? (
+          <div className="alert alert-error mt-3">
+            <span>{error}</span>
+          </div>
+        ) : null}
+
+        <form
+          className="space-y-3 mt-4"
+          onSubmit={(e) => {
+            e.preventDefault()
+            updateMutation.mutate()
+          }}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input
+              type="datetime-local"
+              className="input input-bordered w-full"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              required
+            />
+            <input
+              type="datetime-local"
+              className="input input-bordered w-full"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              required
+            />
+          </div>
+
+          <textarea
+            className="textarea textarea-bordered w-full"
+            placeholder="Notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+
+          <select
+            className="select select-bordered w-full"
+            value={status}
+            onChange={(e) => setStatus(e.target.value as BookingStatusValue)}
+            disabled={!canEditStatus}
+          >
+            <option value={BookingStatus.PENDING}>PENDING</option>
+            <option value={BookingStatus.ACCEPTED}>ACCEPTED</option>
+            <option value={BookingStatus.REJECTED}>REJECTED</option>
+          </select>
+
+          <div className="modal-action">
+            <button type="button" className="btn btn-ghost" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? <span className="loading loading-spinner" /> : 'Save'}
+            </button>
+          </div>
+        </form>
+      </div>
+      <div className="modal-backdrop" onClick={onClose} />
+    </dialog>
+  )
+}
+
+function toDateTimeLocal(value: string) {
+  const d = new Date(value)
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mi = String(d.getMinutes()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`
 }

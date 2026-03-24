@@ -3,22 +3,14 @@ import { useMutation } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
 import { PageHeader } from '../components/ui/PageHeader'
+import { Link } from 'react-router-dom'
 
 export default function SettingsPage() {
   const { user } = useAuth()
   const [profile, setProfile] = useState({ name: user?.name ?? '', email: user?.email ?? '' })
-  const [passwords, setPasswords] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirm: '',
-  })
   const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null
   )
-  const [passwordMsg, setPasswordMsg] = useState<{
-    type: 'success' | 'error'
-    text: string
-  } | null>(null)
 
   const profileMutation = useMutation({
     mutationFn: (data: { name?: string; email?: string }) => api.patch('/users/me', data),
@@ -32,37 +24,17 @@ export default function SettingsPage() {
     },
   })
 
-  const passwordMutation = useMutation({
-    mutationFn: (data: { currentPassword: string; newPassword: string }) =>
-      api.patch('/users/me/password', data),
-    onSuccess: () => {
-      setPasswordMsg({ type: 'success', text: 'Password changed successfully!' })
-      setPasswords({ currentPassword: '', newPassword: '', confirm: '' })
-    },
-    onError: (e: unknown) => {
-      const msg =
-        e instanceof Error && 'response' in e
-          ? (e as { response?: { data?: { error?: string } } }).response?.data?.error
-          : undefined
-      setPasswordMsg({ type: 'error', text: msg ?? 'Failed to change password' })
-    },
-  })
-
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (passwords.newPassword !== passwords.confirm) {
-      setPasswordMsg({ type: 'error', text: 'New passwords do not match' })
-      return
-    }
-    passwordMutation.mutate({
-      currentPassword: passwords.currentPassword,
-      newPassword: passwords.newPassword,
-    })
-  }
-
   return (
     <div className="space-y-6">
-      <PageHeader title="Settings" subtitle="Manage your profile and security preferences." />
+      <PageHeader
+        title="Settings"
+        subtitle="Manage your profile details."
+        actions={
+          <Link to="/settings/password" className="btn btn-outline btn-primary btn-sm">
+            Change Password
+          </Link>
+        }
+      />
 
       {/* Profile */}
       <div className="surface max-w-xl">
@@ -119,59 +91,6 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Change Password */}
-      <div className="surface max-w-xl">
-        <div className="surface-body">
-          <h2 className="card-title text-base">Change Password</h2>
-          {passwordMsg && (
-            <div className={`alert ${passwordMsg.type === 'success' ? 'alert-success' : 'alert-error'}`}>
-              <span>{passwordMsg.text}</span>
-            </div>
-          )}
-          <form onSubmit={handlePasswordSubmit} className="space-y-3">
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Current Password</span>
-              </label>
-              <input
-                type="password"
-                className="input input-bordered"
-                value={passwords.currentPassword}
-                onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })}
-                required
-              />
-            </div>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">New Password</span>
-              </label>
-              <input
-                type="password"
-                className="input input-bordered"
-                value={passwords.newPassword}
-                onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
-                minLength={8}
-                required
-              />
-            </div>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Confirm New Password</span>
-              </label>
-              <input
-                type="password"
-                className="input input-bordered"
-                value={passwords.confirm}
-                onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
-                required
-              />
-            </div>
-            <button type="submit" className="btn btn-primary" disabled={passwordMutation.isPending}>
-              {passwordMutation.isPending ? <span className="loading loading-spinner" /> : 'Change Password'}
-            </button>
-          </form>
-        </div>
-      </div>
     </div>
   )
 }

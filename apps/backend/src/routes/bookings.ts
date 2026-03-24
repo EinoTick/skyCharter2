@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { prisma } from '@skycharter/database'
-import { CreateBookingSchema, UpdateBookingStatusSchema } from '@skycharter/shared-types'
+import { CreateBookingSchema, UpdateBookingSchema, UpdateBookingStatusSchema } from '@skycharter/shared-types'
 import { authenticate, AuthRequest } from '../middleware/auth'
 import { checkRole } from '../middleware/checkRole'
 
@@ -110,6 +110,53 @@ router.post('/', authenticate, checkRole('BOOKING', 'ADMIN'), async (req: AuthRe
     },
   })
   res.status(201).json(booking)
+})
+
+// PATCH /api/bookings/:id  — role-scoped booking updates
+router.patch('/:id', authenticate, async (req: AuthRequest, res) => {
+  const parsed = UpdateBookingSchema.safeParse(req.body)
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: req.params.id },
+    include: { plane: true },
+  })
+  if (!booking) return res.status(404).json({ error: 'Booking not found' })
+
+  const { role, userId } = req.user!
+  if (role === 'BOOKING' && booking.userId !== userId) {
+    return res.status(403).json({ error: 'Forbidden' })
+  }
+  if (role === 'AIRLINE' && booking.plane.airlineId !== userId) {
+    return res.status(403).json({ error: 'Forbidden: not your plane' })
+  }
+
+  // Booking users can edit schedule/notes but not workflow status
+  if (role === 'BOOKING' && parsed.data.status !== undefined) {
+    return res.status(403).json({ error: 'Booking users cannot change status' })
+  }
+
+  const updated = await prisma.booking.update({
+    where: { id: req.params.id },
+    data: {
+      ...(parsed.data.startDate ? { startDate: new Date(parsed.data.startDate) } : {}),
+      ...(parsed.data.endDate ? { endDate: new Date(parsed.data.endDate) } : {}),
+      ...(parsed.data.notes !== undefined ? { notes: parsed.data.notes } : {}),
+      ...(parsed.data.status ? { status: parsed.data.status } : {}),
+    },
+    include: {
+      user: { select: { id: true, name: true, email: true, role: true } },
+      plane: {
+        select: {
+          id: true,
+          name: true,
+          model: true,
+          airline: { select: { id: true, name: true } },
+        },
+      },
+    },
+  })
+  res.json(updated)
 })
 
 // PATCH /api/bookings/:id/status  — AIRLINE (own planes) or ADMIN
