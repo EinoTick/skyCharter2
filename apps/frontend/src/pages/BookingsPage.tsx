@@ -83,8 +83,8 @@ export default function BookingsPage() {
                   <th className="hidden sm:table-cell">Plane</th>
                   {user?.role !== 'BOOKING' && <th>Booked By</th>}
                   {user?.role === 'ADMIN' && <th>Airline</th>}
-                  <th className="hidden lg:table-cell">Start</th>
-                  <th className="hidden lg:table-cell">End</th>
+                  <th className="hidden xl:table-cell">Start</th>
+                  <th className="hidden xl:table-cell">End</th>
                   <th>Status</th>
                   {(user?.role === 'AIRLINE' || user?.role === 'ADMIN') && (
                     <th className="hidden sm:table-cell">Actions</th>
@@ -119,7 +119,7 @@ export default function BookingsPage() {
                     {user?.role === 'ADMIN' && (
                       <td className="text-sm">{b.plane?.airline?.name}</td>
                     )}
-                    <td className="hidden lg:table-cell text-sm whitespace-nowrap">
+                    <td className="hidden xl:table-cell text-sm whitespace-nowrap">
                       {new Date(b.startDate).toLocaleString(undefined, {
                         month: 'short',
                         day: 'numeric',
@@ -127,7 +127,7 @@ export default function BookingsPage() {
                         minute: '2-digit',
                       })}
                     </td>
-                    <td className="hidden lg:table-cell text-sm whitespace-nowrap">
+                    <td className="hidden xl:table-cell text-sm whitespace-nowrap">
                       {new Date(b.endDate).toLocaleString(undefined, {
                         month: 'short',
                         day: 'numeric',
