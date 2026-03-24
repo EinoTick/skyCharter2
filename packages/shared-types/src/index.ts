@@ -32,6 +32,7 @@ export const BookingStatusSchema = z.enum(['PENDING', 'ACCEPTED', 'REJECTED'])
 export const RegisterSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
+  phone: z.string().optional(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   role: UserRoleSchema,
 })
@@ -75,12 +76,14 @@ export const UpdateBookingSchema = z.object({
 export const UpdateProfileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').optional(),
   email: z.string().email('Invalid email address').optional(),
+  phone: z.string().optional(),
 })
 
 // Admin user management
 export const UpdateUserSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').optional(),
   email: z.string().email('Invalid email address').optional(),
+  phone: z.string().optional(),
   role: UserRoleSchema.optional(),
 })
 

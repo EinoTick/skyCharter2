@@ -13,7 +13,7 @@ router.post('/register', async (req: Request, res: Response) => {
     return res.status(400).json({ error: parsed.error.flatten() })
   }
 
-  const { name, email, password, role } = parsed.data
+  const { name, email, phone, password, role } = parsed.data
 
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) {
@@ -22,8 +22,8 @@ router.post('/register', async (req: Request, res: Response) => {
 
   const hashed = await bcrypt.hash(password, 10)
   const user = await prisma.user.create({
-    data: { name, email, password: hashed, role },
-    select: { id: true, name: true, email: true, role: true, createdAt: true },
+    data: { name, email, phone: phone || null, password: hashed, role },
+    select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
   })
 
   const token = jwt.sign(

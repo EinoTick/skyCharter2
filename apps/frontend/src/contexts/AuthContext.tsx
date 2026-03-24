@@ -5,6 +5,7 @@ export interface AuthUser {
   id: string
   name: string
   email: string
+  phone?: string | null
   role: string
 }
 
@@ -13,7 +14,13 @@ interface AuthContextType {
   token: string | null
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (data: { name: string; email: string; password: string; role: string }) => Promise<void>
+  register: (data: {
+    name: string
+    email: string
+    phone?: string
+    password: string
+    role: string
+  }) => Promise<void>
   logout: () => void
 }
 
@@ -52,7 +59,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(token)
   }
 
-  const register = async (data: { name: string; email: string; password: string; role: string }) => {
+  const register = async (data: {
+    name: string
+    email: string
+    phone?: string
+    password: string
+    role: string
+  }) => {
     const res = await api.post<{ user: AuthUser; token: string }>('/auth/register', data)
     const { user, token } = res.data
     localStorage.setItem('skycharter_token', token)

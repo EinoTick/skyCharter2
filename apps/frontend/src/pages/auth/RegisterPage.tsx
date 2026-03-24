@@ -11,7 +11,13 @@ const ROLES = [
 export default function RegisterPage() {
   const { register } = useAuth()
   const navigate = useNavigate()
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'BOOKING' })
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: 'BOOKING',
+  })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -20,7 +26,7 @@ export default function RegisterPage() {
     setError('')
     setLoading(true)
     try {
-      await register(form)
+      await register({ ...form, phone: form.phone || undefined })
       navigate('/dashboard')
     } catch (err: unknown) {
       const msg =
@@ -73,6 +79,17 @@ export default function RegisterPage() {
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 required
+              />
+            </div>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Phone (optional)</span>
+              </label>
+              <input
+                type="tel"
+                className="input input-bordered"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
               />
             </div>
             <div className="form-control">

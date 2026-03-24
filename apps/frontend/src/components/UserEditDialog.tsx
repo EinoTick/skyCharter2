@@ -7,6 +7,7 @@ type EditableUser = {
   id: string
   name: string
   email: string
+  phone?: string | null
   role: string
 }
 
@@ -21,11 +22,16 @@ export function UserEditDialog({
   onClose: () => void
   onSaved?: () => void
 }) {
-  const [form, setForm] = useState({ name: '', email: '', role: UserRole.BOOKING as string })
+  const [form, setForm] = useState({ name: '', email: '', phone: '', role: UserRole.BOOKING as string })
 
   useEffect(() => {
     if (!user) return
-    setForm({ name: user.name ?? '', email: user.email ?? '', role: user.role ?? UserRole.BOOKING })
+    setForm({
+      name: user.name ?? '',
+      email: user.email ?? '',
+      phone: user.phone ?? '',
+      role: user.role ?? UserRole.BOOKING,
+    })
   }, [user])
 
   const roles = useMemo(
@@ -43,6 +49,7 @@ export function UserEditDialog({
       return api.patch(`/users/${user.id}`, {
         name: form.name,
         email: form.email,
+        phone: form.phone || undefined,
         role: form.role,
       })
     },
@@ -103,6 +110,18 @@ export function UserEditDialog({
               value={form.email}
               onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))}
               required
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Phone</span>
+            </label>
+            <input
+              type="tel"
+              className="input input-bordered w-full"
+              value={form.phone}
+              onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))}
             />
           </div>
 

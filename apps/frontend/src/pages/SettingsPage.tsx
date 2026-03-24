@@ -7,13 +7,17 @@ import { Link } from 'react-router-dom'
 
 export default function SettingsPage() {
   const { user } = useAuth()
-  const [profile, setProfile] = useState({ name: user?.name ?? '', email: user?.email ?? '' })
+  const [profile, setProfile] = useState({
+    name: user?.name ?? '',
+    email: user?.email ?? '',
+    phone: user?.phone ?? '',
+  })
   const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null
   )
 
   const profileMutation = useMutation({
-    mutationFn: (data: { name?: string; email?: string }) => api.patch('/users/me', data),
+    mutationFn: (data: { name?: string; email?: string; phone?: string }) => api.patch('/users/me', data),
     onSuccess: () => setProfileMsg({ type: 'success', text: 'Profile updated successfully!' }),
     onError: (e: unknown) => {
       const msg =
@@ -71,6 +75,17 @@ export default function SettingsPage() {
                 className="input input-bordered"
                 value={profile.email}
                 onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+              />
+            </div>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Phone</span>
+              </label>
+              <input
+                type="tel"
+                className="input input-bordered"
+                value={profile.phone}
+                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
               />
             </div>
             <div className="form-control">

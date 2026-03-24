@@ -18,7 +18,7 @@ router.get('/', authenticate, checkRole('ADMIN'), async (req, res) => {
     prisma.user.count(),
     prisma.user.groupBy({ by: ['role'], _count: { _all: true } }),
     prisma.user.findMany({
-      select: { id: true, name: true, email: true, role: true, createdAt: true },
+      select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
       skip,
       take: size,
@@ -37,7 +37,7 @@ router.get('/', authenticate, checkRole('ADMIN'), async (req, res) => {
 router.get('/me', authenticate, async (req: AuthRequest, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user!.userId },
-    select: { id: true, name: true, email: true, role: true, createdAt: true },
+    select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
   })
   if (!user) return res.status(404).json({ error: 'User not found' })
   res.json(user)
@@ -48,14 +48,14 @@ router.post('/', authenticate, checkRole('ADMIN'), async (req: AuthRequest, res)
   const parsed = RegisterSchema.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
 
-  const { name, email, password, role } = parsed.data
+  const { name, email, phone, password, role } = parsed.data
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) return res.status(409).json({ error: 'Email already in use' })
 
   const hashed = await bcrypt.hash(password, 10)
   const created = await prisma.user.create({
-    data: { name, email, password: hashed, role },
-    select: { id: true, name: true, email: true, role: true, createdAt: true },
+    data: { name, email, phone: phone || null, password: hashed, role },
+    select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
   })
   res.status(201).json(created)
 })
@@ -68,7 +68,7 @@ router.patch('/me', authenticate, async (req: AuthRequest, res) => {
   const updated = await prisma.user.update({
     where: { id: req.user!.userId },
     data: parsed.data,
-    select: { id: true, name: true, email: true, role: true },
+    select: { id: true, name: true, email: true, phone: true, role: true },
   })
   res.json(updated)
 })
@@ -81,7 +81,7 @@ router.patch('/:id', authenticate, checkRole('ADMIN'), async (req: AuthRequest, 
   const updated = await prisma.user.update({
     where: { id: req.params.id },
     data: parsed.data,
-    select: { id: true, name: true, email: true, role: true, createdAt: true },
+    select: { id: true, name: true, email: true, phone: true, role: true, createdAt: true },
   })
   res.json(updated)
 })

@@ -12,6 +12,7 @@ interface User {
   id: string
   name: string
   email: string
+  phone?: string | null
   role: string
   createdAt: string
 }
@@ -113,6 +114,7 @@ export default function UsersPage() {
                 <tr>
                   <th>Name</th>
                   <th>Email</th>
+                  <th className="hidden md:table-cell">Phone</th>
                   <th>Role</th>
                   <th className="hidden sm:table-cell">Joined</th>
                 </tr>
@@ -129,6 +131,7 @@ export default function UsersPage() {
                   >
                     <td className="font-medium">{u.name}</td>
                     <td className="text-sm">{u.email}</td>
+                    <td className="hidden md:table-cell text-sm">{u.phone || '—'}</td>
                     <td>
                       <span className={`badge badge-sm ${roleBadge[u.role] ?? 'badge-neutral'}`}>
                         {u.role}
@@ -176,7 +179,13 @@ export default function UsersPage() {
       <UserEditDialog
         user={
           selectedUser
-            ? { id: selectedUser.id, name: selectedUser.name, email: selectedUser.email, role: selectedUser.role }
+            ? {
+                id: selectedUser.id,
+                name: selectedUser.name,
+                email: selectedUser.email,
+                phone: selectedUser.phone,
+                role: selectedUser.role,
+              }
             : null
         }
         open={!!selectedUser}
@@ -210,13 +219,14 @@ function CreateUserDialog({
   error,
 }: {
   onClose: () => void
-  onSubmit: (d: { name: string; email: string; password: string; role: string }) => void
+  onSubmit: (d: { name: string; email: string; phone?: string; password: string; role: string }) => void
   loading: boolean
   error?: string
 }) {
   const [form, setForm] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
     role: UserRole.BOOKING as string,
   })
@@ -237,7 +247,7 @@ function CreateUserDialog({
           className="space-y-3 mt-4"
           onSubmit={(e) => {
             e.preventDefault()
-            onSubmit(form)
+            onSubmit({ ...form, phone: form.phone || undefined })
           }}
         >
           <input
@@ -255,6 +265,13 @@ function CreateUserDialog({
             value={form.email}
             onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))}
             required
+          />
+          <input
+            type="tel"
+            className="input input-bordered w-full"
+            placeholder="Phone (optional)"
+            value={form.phone}
+            onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))}
           />
           <input
             type="password"
